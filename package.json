@@ -1,0 +1,28 @@
+{
+  "name": "api-leads-management",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx watch ./src/server.ts",
+    "build": "tsc",
+    "start": "node ./build/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "^6.13.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.2.1",
+    "prisma": "^6.13.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
+  }
+}
