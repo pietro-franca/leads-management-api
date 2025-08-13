@@ -1,11 +1,17 @@
 import { Handler } from "express"
-import { prisma } from "../database"
 import { CreateLeadRequestSchema, GetLeadsRequestsSchema, UpdateLeadRequestSchema } from "./schemas/LeadsRequestSchema"
 import { HttpError } from "../errors/HttpError"
-import { Prisma } from "@prisma/client"
+import { ILeadsRepository, ILeadWhereParams } from "../repositories/LeadsRepository"
 
 export class LeadsController
 {
+  private leadsRepository: ILeadsRepository
+
+  constructor(leadsRepository: ILeadsRepository)
+  {
+    this.leadsRepository = leadsRepository
+  }
+
   index: Handler = async (req, res, next) => {
     try 
     {
@@ -18,29 +24,23 @@ export class LeadsController
         orderBy = "asc" 
       } = query
 
-      const pageNumber = Number(page)
-      const pageSizeNumber = Number(pageSize)
-      const where: Prisma.LeadWhereInput = {}
+      const limit = Number(pageSize)
+      const offset = (Number(page) - 1) * limit
+      const where: ILeadWhereParams = {}
 
-      if (name) where.name = { contains: name, mode: "insensitive" }
+      if (name) where.name = { like: name, mode: "insensitive" }
       if (status) where.status = status
 
-      const leads = await prisma.lead.findMany({
-        where,
-        skip: (pageNumber - 1) * pageSizeNumber,
-        take: pageSizeNumber,
-        orderBy: { [sortBy]: orderBy }
-      })
-
-      const total = await prisma.lead.count({ where })
+      const leads = await this.leadsRepository.find({ where, sortBy, orderBy, limit, offset })
+      const total = await this.leadsRepository.count(where)
       
       res.json({
         data: leads,
         meta: {
-          page: pageNumber,
-          pageSize: pageSizeNumber,
+          page: Number(page),
+          pageSize: limit,
           total,
-          totalPages: Math.ceil(total / pageSizeNumber)
+          totalPages: Math.ceil(total / limit)
         }
       })
     } 
@@ -55,9 +55,8 @@ export class LeadsController
     {
       const body = CreateLeadRequestSchema.parse(req.body)
       if (!body.status) body.status = "New"
-      const newLead = await prisma.lead.create({
-        data: body
-      })
+
+      const newLead = await this.leadsRepository.create(body)
       res.status(201).json(newLead)
     } 
     catch (error) 
@@ -69,14 +68,7 @@ export class LeadsController
   show: Handler = async (req, res, next) => {
     try 
     {
-      const lead = await prisma.lead.findUnique({
-        where: { id: +req.params.id},
-        include: {
-          groups: true,
-          campaigns: true
-        }
-      })
-
+      const lead = await this.leadsRepository.findById(Number(req.params.id))
       if (!lead) throw new HttpError(404, "Lead Not Found!")
 
       res.json(lead)
@@ -93,7 +85,7 @@ export class LeadsController
       const id = Number(req.params.id)
       const body = UpdateLeadRequestSchema.parse(req.body)
 
-      const lead = await prisma.lead.findUnique({ where: { id } })
+      const lead = await this.leadsRepository.findById(id)
       if (!lead) throw new HttpError(404, "Lead Not Found!")
 
       if (lead.status === "New" && body.status && body.status !== "Contacted")
@@ -109,10 +101,7 @@ export class LeadsController
           throw new HttpError(400, "A lead can only be archived after 6 months of inactivity")
       }
 
-      const updatedLead = await prisma.lead.update({
-        data: body,
-        where: { id }
-      })
+      const updatedLead = await this.leadsRepository.updateById(id, body)
 
       res.json(updatedLead)
     } 
@@ -125,14 +114,12 @@ export class LeadsController
   delete: Handler = async (req, res, next) => {
     try 
     {
-      const leadExists = await prisma.lead.findUnique({ 
-        where: { id: +req.params.id } 
-      })
+      const id = Number(req.params.id)
+      const leadExists = await this.leadsRepository.findById(id)
+      
       if (!leadExists) throw new HttpError(404, "Lead Not Found!")
       
-        const deletedLead = await prisma.lead.delete({
-        where: { id: +req.params.id }
-      })
+      const deletedLead = await this.leadsRepository.deleteById(id)
 
       res.json(deletedLead)
     } 
