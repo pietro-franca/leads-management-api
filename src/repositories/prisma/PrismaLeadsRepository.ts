@@ -6,7 +6,7 @@ export class PrismaLeadsRepository implements ILeadsRepository
 {
   async find(params: IFindLeadsParams): Promise<Lead[]>
   {
-    const { where, sortBy, orderBy, offset, limit } = params
+    const { where, sortBy, orderBy, offset, limit, include } = params
     return prisma.lead.findMany({
       where: {
         name: {
@@ -14,11 +14,20 @@ export class PrismaLeadsRepository implements ILeadsRepository
           equals: where?.name?.equals,
           mode: where?.name?.mode
         },
-        status: where?.status
+        status: where?.status,
+        groups: {
+          some: {
+            id: where?.groupId
+          }
+        }
       },
       orderBy: { [sortBy ?? "name"]: orderBy },
       skip: offset,
-      take: limit
+      take: limit,
+      include: {
+        groups: include?.groups,
+        campaigns: include?.campaigns
+      }
     })
   }
 
@@ -42,7 +51,12 @@ export class PrismaLeadsRepository implements ILeadsRepository
           equals: where?.name?.equals,
           mode: where?.name?.mode
         },
-        status: where?.status
+        status: where?.status,
+        groups: {
+          some: {
+            id: where?.groupId
+          }
+        }
       }
     })
   }

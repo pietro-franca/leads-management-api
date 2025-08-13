@@ -10,6 +10,6 @@ export const UpdateGroupRequestSchema = z.object({
   description: z.string().optional()
 })
 
-export const addGroupLeadRequestSchema = z.object({
+export const AddGroupLeadRequestSchema = z.object({
   leadId: z.number()
 })
