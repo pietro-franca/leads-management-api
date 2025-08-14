@@ -25,7 +25,7 @@ export class GroupLeadsController
         sortBy = "name",
         orderBy = "asc"
       } = query
-
+      
       const limit = Number(pageSize)
       const offset = (Number(page) - 1) * limit
       const where: ILeadWhereParams = { groupId }
