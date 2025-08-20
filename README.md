@@ -9,8 +9,6 @@ This is a **RESTful API** for managing **leads, groups, and campaigns**, built w
 
 The API follows **SOLID principles**, ensuring low coupling, high cohesion, and clear separation of concerns across controllers, services, and repositories.
 
----
-
 ## Features
 - **Leads**
   - Create, update, delete, list all, and find by ID
@@ -27,14 +25,12 @@ The API follows **SOLID principles**, ensuring low coupling, high cohesion, and 
   - Sort by attributes (`name`, `status`, `createdAt`) in ascending or descending order
   - Paginate results with `page` and `pageSize` parameters
 
----
 
 ## Business Rules
 - A **lead** must be created with status `New`, unless explicitly defined otherwise.
 - A lead with status `New` must first be updated to `Contacted` before receiving any other status.
 - A lead can only be set to `Archived` if its last update was at least **6 months ago**.
 
----
 
 ## Architecture
 The project is organized into:
@@ -48,7 +44,6 @@ This architecture ensures:
 - Scalability
 - Testability
 
----
 
 ## Endpoints (examples)
 
@@ -100,23 +95,28 @@ This architecture ensures:
 - `PUT /campaigns/:campaignId/leads/:leadId` → Update a lead's campaign status
 - `DELETE /campaigns/:campaignId/leads/:leadId` → Remove a lead from a campaign 
 
----
 
 ## Installation & Setup
 
+1. Clone repository
 ```bash
-# Clone repository
-git clone https://github.com/pietro-franca/leads-management-api.git
-
-# Install dependencies
+git clone https://github.com/pietro-franca/leads-management-api.git 
+```
+2. Install dependencies
+```bash
 npm install
-
-# Setup environment variables
+```
+3. Setup environment variables
+```bash
 cp .env.example .env
+```
 
-# Run migrations
+4. Run migrations
+```bash
 npx prisma migrate dev
+```
 
-# Start development server
+5. Start development server
+```bash
 npm run dev
 ```
