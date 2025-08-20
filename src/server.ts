@@ -11,5 +11,5 @@ app.use('/api', router)
 app.use(errorHandlerMiddleware)
 
 const PORT = process.env.PORT || 3000
-app.listen(PORT, () => console.log(`Servidor iniciado com sucesso!\nPorta: http://localhost:${PORT}/`))
+app.listen(PORT, () => console.log(`Server successfully initialized!\nPORT: http://localhost:${PORT}/`))
  
