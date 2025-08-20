@@ -1,16 +1,11 @@
 import { Handler } from "express";
 import { GetLeadsRequestsSchema } from "./schemas/LeadsRequestSchema";
-import { prisma } from "../database";
 import { AddGroupLeadRequestSchema } from "./schemas/GroupsRequestSchema";
-import { IGroupsRepository } from "../repositories/GroupsRepository";
-import { ILeadsRepository, ILeadWhereParams } from "../repositories/LeadsRepository";
+import { GroupsService } from "../services/GroupsService";
 
 export class GroupLeadsController
 {
-  constructor(
-    private readonly groupsRepository: IGroupsRepository,
-    private readonly leadsRepository: ILeadsRepository
-  ) { }
+  constructor(private readonly groupsService: GroupsService) { }
 
   getLeads: Handler = async (req, res, next) => {
     try 
@@ -26,28 +21,11 @@ export class GroupLeadsController
         orderBy = "asc"
       } = query
       
-      const limit = Number(pageSize)
-      const offset = (Number(page) - 1) * limit
-      const where: ILeadWhereParams = { groupId }
+      const result = await this.groupsService.getAllGroupLeadsPaginated(
+        groupId, { name, status, page: +page, pageSize: +pageSize, sortBy, orderBy } 
+      )
 
-      if (name) where.name = { like: name, mode: "insensitive" }
-      if (status) where.status = status
-
-      const leads = await this.leadsRepository.find({
-        where, sortBy, orderBy, limit, offset, include: { groups: true }
-      })
-
-      const total = await this.leadsRepository.count(where)
-
-      res.json({
-        data: leads,
-        meta: {
-          page: Number(page),
-          pageSize: limit,
-          total,
-          totalPages: Math.ceil(total / limit)
-        }
-      })
+      res.json(result)
     } 
     catch (error) 
     {
@@ -60,8 +38,7 @@ export class GroupLeadsController
     {
       const groupId = Number(req.params.groupId)
       const { leadId } = AddGroupLeadRequestSchema.parse(req.body)
-      const updatedGroup = await this.groupsRepository.addLead(groupId, leadId)
-
+      const updatedGroup = await this.groupsService.addGroupLead(groupId, leadId)
       res.status(201).json(updatedGroup)
     } 
     catch (error) 
@@ -75,8 +52,7 @@ export class GroupLeadsController
     {
       const groupId = Number(req.params.groupId)
       const leadId = Number(req.params.leadId)
-      const updatedGroup = await this.groupsRepository.removeLead(groupId, leadId)
-
+      const updatedGroup = await this.groupsService.removeGroupLead(groupId, leadId)
       res.json(updatedGroup)
     } 
     catch (error) 

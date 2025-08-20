@@ -1,14 +1,10 @@
 import { Handler } from "express";
 import { AddLeadRequestSchema, GetCampaignLeadsRequestSchema, UpdateLeadStatusRequestSchema } from "./schemas/CampaignsRequestSchema";
-import { ILeadsRepository, ILeadWhereParams } from "../repositories/LeadsRepository";
-import { ICampaignsRepository } from "../repositories/CampaignsRepository";
+import { CampaignsService } from "../services/CampaignsService";
 
 export class CampaignLeadsController
 {
-  constructor(
-    private readonly campaignsRepository: ICampaignsRepository,
-    private readonly leadsRepository: ILeadsRepository
-  ) { }
+  constructor(private readonly campaignsService: CampaignsService) { }
 
   getLeads: Handler = async (req, res, next) => {
     try 
@@ -24,32 +20,11 @@ export class CampaignLeadsController
         orderBy = "asc" 
       } = query
 
-      const limit = Number(pageSize)
-      const offset = (Number(page) - 1) * limit
-      const where: ILeadWhereParams = { campaignId, campaignStatus: status }
-
-      if (name) where.name = { like: name, mode: "insensitive" }
-
-      const leads = await this.leadsRepository.find({
-        where,
-        sortBy,
-        orderBy,
-        limit,
-        offset,
-        include: { campaigns: true }
-      })
-
-      const total = await this.leadsRepository.count(where)
-
-      res.json({
-        leads,
-        meta: {
-          page: Number(page),
-          pageSize: limit,
-          total,
-          totalPages: Math.ceil(total / limit)
-        }
-      })
+      const result = await this.campaignsService.getAllCampaignLeadsPaginated(
+        campaignId, { name, status, page: +page, pageSize: +pageSize, sortBy, orderBy }
+      )
+      
+      res.json(result)
     } 
     catch (error) 
     {
@@ -64,7 +39,7 @@ export class CampaignLeadsController
       const { leadId, status = "New" } = AddLeadRequestSchema.parse(req.body)
       const params = {campaignId, leadId, status}
 
-      await this.campaignsRepository.addLead(params)
+      await this.campaignsService.addCampaignLead(params)
 
       res.status(201).end()
     } 
@@ -80,10 +55,9 @@ export class CampaignLeadsController
       const campaignId = Number(req.params.campaignId)
       const leadId = Number(req.params.leadId)
       const { status } = UpdateLeadStatusRequestSchema.parse(req.body)
+      const params = {campaignId, leadId, status}
       
-      const updatedLeadCampaign = await this.campaignsRepository.updateLeadStatus({
-        campaignId, leadId, status
-      })
+      const updatedLeadCampaign = await this.campaignsService.updateCampaignLead(params)
 
       res.json(updatedLeadCampaign)
     } 
@@ -99,7 +73,7 @@ export class CampaignLeadsController
       const campaignId = Number(req.params.campaignId)
       const leadId = Number(req.params.leadId)
 
-      const removedLead = await this.campaignsRepository.removeLead(campaignId, leadId)
+      const removedLead = await this.campaignsService.removeCampaignLead(campaignId, leadId)
 
       res.json(removedLead)
     } 

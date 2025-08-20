@@ -1,6 +1,6 @@
 import { Group } from "@prisma/client";
 
-export  interface ICreateGroupParams
+export interface ICreateGroupParams
 {
   name: string
   description: string
